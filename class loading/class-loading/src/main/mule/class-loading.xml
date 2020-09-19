@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="0014cc1a-46ed-4a8c-954c-bf5b1f1c122f" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<import doc:name="Import" doc:id="6a575dcc-2dc1-4df1-9407-e5e3daa62ce4" file="sub-project.xml" />
+	<flow name="class-loadingFlow" doc:id="021f7e7a-b26e-4393-8e0d-9c3e89704cdf" >
+		<http:listener doc:name="Listener" doc:id="f52b0785-581c-495c-bea8-f0967146f399" config-ref="HTTP_Listener_config" path="/cl"/>
+		<java:invoke-static method="sayHello()" doc:name="Invoke static" doc:id="82a8afa2-90c4-47dc-8e9a-31d399ecccf7" class="com.mycompany.Greeting"/>
+		<ee:transform doc:name="Transform Message" doc:id="67cbfba9-0136-46ee-9d54-e106bc05a49a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="class-loadingFlow1" doc:id="1f5f777f-cdb2-4112-9582-b5fa0ae782eb" >
+		<http:listener doc:name="Listener" doc:id="9eb4125e-265d-4860-939f-a51ad930f295" config-ref="HTTP_Listener_config" path="/import/flow"/>
+		<flow-ref doc:name="Flow Reference" doc:id="b4afc6ac-5ddd-45ca-9a3e-bd43879dc9bc" name="sub-projectFlow"/>
+	</flow>
+	<flow name="class-loadingFlow2" doc:id="9a3548af-55d3-4149-a199-362059de06e8" >
+		<http:listener doc:name="Listener" doc:id="b9689ac9-654d-44b1-89ef-94786a5e038b" config-ref="HTTP_Listener_config" path="/import/subflow"/>
+		<flow-ref doc:name="Flow Reference" doc:id="bab0d8be-848f-4fec-a419-ecfb47b07b90" name="sub-projectSub_Flow"/>
+	</flow>
+</mule>

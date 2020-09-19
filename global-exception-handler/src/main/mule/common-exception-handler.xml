@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<error-handler name="common-exception-handler" doc:id="8638fb61-1195-4530-990c-ff5f2170dc54" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="aa7b2c9a-d8c3-4a73-a0fc-082f7682a7c2" type="CONNECTIVITY">
+			<set-variable value="504" doc:name="Set Variable" doc:id="316575a9-e0af-40f9-82c6-d219caaa4f8a" variableName="httpStatus"/>
+			<flow-ref doc:name="Flow Reference" doc:id="77b00880-c811-452b-9420-85f64ead52aa" name="generate-error-response"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="de884c4a-cd0b-493f-a868-90da5f4162b6" type="MULE:CLIENT_SECURITY">
+			<set-variable value="500" doc:name="Set Variable" doc:id="e7ad8f2b-2633-455f-a2fd-10907a2104c9" variableName="httpStatus"/>
+			<flow-ref doc:name="Flow Reference" doc:id="39b9eccd-507e-4531-8a80-7483c828acf2" name="generate-error-response"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="24dcb674-608a-4202-894c-fd2cc962c345" type="MULE:SERVER_SECURITY">
+			<choice doc:name="Choice" doc:id="3df366ee-5aad-4219-b085-cb83ac69caea" >
+				<when expression="#[error.errorType.identifier == 'UNAUTHORIZED']">
+					<set-variable value="401" doc:name="Set Variable" doc:id="5dcbaaf2-f471-404d-b87c-69e161678cd7" variableName="httpStatus"/>
+				</when>
+				<otherwise >
+					<set-variable value="403" doc:name="Set Variable" doc:id="fabed25e-165f-4d91-91a0-1ae2e6921666" variableName="httpStatus"/>
+				</otherwise>
+			</choice>
+			<flow-ref doc:name="Flow Reference" doc:id="b4ab4fb3-bda6-4dd0-b61a-601cc16927ac" name="generate-error-response" />
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="c086e8cb-7d2f-45e5-9db6-4250c9df7d6b" type="ANY">
+			<choice doc:name="Choice" doc:id="9bb83d6e-059b-4e22-8e9f-e8d0788e44cd" >
+				<when expression="#[error.errorType.namespace == 'APIKIT']">
+					<flow-ref doc:name="Flow Reference" doc:id="029472cb-90b5-4569-81e1-6129d075ad18" name="router-kit-exceptions"/>
+				</when>
+				<otherwise >
+					<set-variable value="500" doc:name="Set Variable" doc:id="fe08827e-ae3d-4cc2-8c78-451a1ffc4145" variableName="httpStatus"/>
+				</otherwise>
+			</choice> 
+			<flow-ref doc:name="Flow Reference" doc:id="fdde08c9-8596-4e2c-ad30-3991a83e4d19" name="generate-error-response"/>
+		</on-error-propagate>
+	</error-handler>
+	<sub-flow name="router-kit-exceptions" doc:id="4adbace7-5e1b-4f8d-82bd-209f6b311ccd" >
+		<choice doc:name="Choice" doc:id="8b156548-bc6b-4b5d-b135-44bd977805d0" >
+			<when expression="#[error.errorType.identifier == 'BAD_REQUEST']">
+				<set-variable value="400" doc:name="Set Variable" doc:id="2394bce9-8e57-4353-b046-f397054f4dc9" variableName="httpStatus"/>
+			</when>
+			<when expression="error.errorType.identifier == 'NOT_FOUND'">
+				<set-variable value="404" doc:name="Set Variable" doc:id="ff9c240d-bda8-4d38-a432-03adcb882cd1" variableName="httpStatus"/>
+			</when>
+			<when expression="#[error.errorType.identifier == 'METHOD_NOT_ALLOWED']">
+				<set-variable value="405" doc:name="Set Variable" doc:id="5f299342-d958-4c86-9f3d-7a6be2b8c118" variableName="httpStatus"/>
+			</when>
+			<when expression="#[error.errorType.identifier == 'NOT_ACCEPTABLE']">
+				<set-variable value="406" doc:name="Set Variable" doc:id="14964a27-a6b9-410f-a3d6-482b8015c308" variableName="httpStatus"/>
+			</when>
+			<when expression="#[error.errorType.identifier == 'UNSUPPORTED_MEDIA_TYPE']">
+				<set-variable value="415" doc:name="Set Variable" doc:id="bc133790-82c6-4364-8202-999a6825d22f" variableName="httpStatus"/>
+			</when>
+			<when expression="#[error.errorType.identifier == 'NOT_IMPLEMENTED']">
+				<set-variable value="501" doc:name="Set Variable" doc:id="4c34d4ca-e184-4702-bb77-04014b2b74b2" variableName="httpStatus"/>
+			</when>
+		</choice>
+	</sub-flow>
+	<sub-flow name="generate-error-response" doc:id="37a05a99-34fd-4c13-a9d3-540cd59911b2" >
+		<ee:transform doc:name="Transform Message" doc:id="64905982-7d9e-416b-b754-f05e9f4cc271" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	code: vars.httpStatus,
+	"type": error.errorType.identifier,
+	description: error.description
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+</mule>

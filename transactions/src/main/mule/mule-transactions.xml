@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:bti="http://www.mulesoft.org/schema/mule/ee/bti" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/bti http://www.mulesoft.org/schema/mule/ee/bti/current/mule-bti-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="11abd926-8825-41c0-8771-8b27328fff1d" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="df047398-b956-460a-bf12-e80644159231" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="xrBouqf2" database="employee" />
+	</db:config>
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="80926bda-2eb4-49fc-8189-05b20e0995be" >
+		<jms:active-mq-connection >
+			<jms:factory-configuration brokerUrl="tcp://localhost:61616"/>
+		</jms:active-mq-connection>
+	</jms:config>
+	<db:config name="XA_Database_Config" doc:name="Database Config" doc:id="818f9c9f-756a-48cf-afdb-270bfc7bd3d6" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="xrBouqf2" database="employee" useXaTransactions="true" />
+	</db:config>
+	<bti:transaction-manager doc:name="Bitronix Transaction Manager" doc:id="a12e9cf0-b21a-4df1-ba07-0db570145f70" />
+	<jms:config name="XA_JMS_Config" doc:name="JMS Config" doc:id="929fa804-b892-4e7b-8d78-956cc3da9de1" >
+		<jms:active-mq-connection >
+			<jms:caching-strategy >
+				<jms:no-caching />
+			</jms:caching-strategy>
+			<jms:factory-configuration brokerUrl="tcp://localhost:61616" enable-xa="true" />
+		</jms:active-mq-connection>
+	</jms:config>
+	<flow name="xa-transaction-flow" doc:id="108f6cf6-5dea-4188-9b0d-0ab06a61d740" >
+		<http:listener doc:name="Listener" doc:id="4fc29a46-c96b-40bc-8fb4-bbc04ebab5cd" config-ref="HTTP_Listener_config" path="/test"/>
+		<try doc:name="Try" doc:id="6ccf6df5-decb-47e2-ab3b-68b59857ce21" transactionalAction="ALWAYS_BEGIN" transactionType="XA">
+			<logger level="INFO" doc:name="Logger" doc:id="1538fd49-4b75-4654-a9a2-eb5095e70951" message="Transaciton Starts ..." />
+			<ee:transform doc:name="Transform Message" doc:id="f8e941aa-3b68-4fd4-aa70-b26bbf0adf30">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="testMessage"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Transaction": "XA TX"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+			<db:insert doc:name="Insert" doc:id="119fa076-9ed0-427e-a549-f53a6262d3fb" config-ref="XA_Database_Config">
+			<db:sql>INSERT INTO JSON (data) VALUES (:data)</db:sql>
+			<db:input-parameters><![CDATA[#[{
+	data: write(vars.testMessage, 'application/json')
+}]]]></db:input-parameters>
+		</db:insert>
+			<jms:publish doc:name="Publish" doc:id="56cd4c65-c730-414e-8d4c-f3929c182aba" config-ref="XA_JMS_Config" destination="TEST.Q">
+			<jms:message>
+				<jms:body><![CDATA[#[vars.testMessage]]]></jms:body>
+			</jms:message>
+		</jms:publish>
+			<ee:transform doc:name="Transform Message" doc:id="810baa0a-dcd4-4ba9-aaa5-4f2445797729">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Hello"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="a1b844b4-2a50-415e-9039-639aa9447fb6" message="Transaciton Completed" />
+		</try>
+		<logger level="INFO" doc:name="Logger" doc:id="b3e0078e-6a97-4dc6-a27f-f7c8817b0f5a" message="End!!!" />
+	</flow>
+	<flow name="single-transaction-database-flow" doc:id="52317ca2-7b65-49b6-b134-ad901d8b3c22" >
+		<http:listener doc:name="Listener" doc:id="18e8414c-7593-40bb-8e38-76cca6ba00c8" config-ref="HTTP_Listener_config" path="/db/tx"/>
+		<try doc:name="Try" doc:id="476d0f37-5529-4c67-bfa9-a292eeca20e3" transactionalAction="ALWAYS_BEGIN">
+			<logger level="INFO" doc:name="Logger" doc:id="2f2705a1-0505-4433-b488-2b9760250964" message="Transaciton Starts ..." />
+			<ee:transform doc:name="Transform Message" doc:id="0a4a9edb-4082-4081-bbea-ed8582f6a2e0">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="testMessage"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Transaction": "Single"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+			<db:insert doc:name="Insert" doc:id="a2e638f5-6e7e-4eaf-bebb-39596d218f5f" config-ref="Database_Config">
+			<db:sql>INSERT INTO JSON (data) VALUES (:data)</db:sql>
+			<db:input-parameters><![CDATA[#[{
+	data: write(vars.testMessage, 'application/json')
+}]]]></db:input-parameters>
+		</db:insert>
+			<ee:transform doc:name="Transform Message" doc:id="ae99909f-daab-4228-9754-1db28c8a7464" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Hello"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="353c859f-fc2d-4782-939f-a175f545b226" message="Transaciton Completed" />
+		</try>
+		<logger level="INFO" doc:name="Logger" doc:id="b888e402-b023-4bdd-9e2b-7659de1f7231" message="End!!!"/>
+	</flow>
+	<flow name="single-transaction-mq-flow" doc:id="6eedfdfe-f624-455f-aa53-cb2793230b26" >
+		<http:listener doc:name="Listener" doc:id="2476d767-1fe4-4b5f-a5be-826afa0f1ef4" config-ref="HTTP_Listener_config" path="/mq/tx"/>
+		<try doc:name="Try" doc:id="fe69f24b-2983-4bf5-95d9-225898f215f7" transactionalAction="ALWAYS_BEGIN">
+			<logger level="INFO" doc:name="Logger" doc:id="1841159e-6dca-4929-aee1-1d2bfe2aa287" message="Transaciton Starts ..." />
+			<ee:transform doc:name="Transform Message" doc:id="97074a86-6580-4042-a79e-25572dbb2261">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="testMessage"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Transaction": "Single"
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+			<jms:publish doc:name="Publish" doc:id="3602a2e2-bf75-4390-ac2d-1d06850e5e31" config-ref="JMS_Config" destination="TEST.Q">
+			<jms:message>
+				<jms:body><![CDATA[#[vars.testMessage]]]></jms:body>
+			</jms:message>
+		</jms:publish>
+			<ee:transform doc:name="Transform Message" doc:id="933c9dfb-c620-4826-9227-ae0fde86f047">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Hello"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="a01eb577-7a96-4e54-82f5-d2d783e25a10" message="Transaciton Completed" />
+		</try>
+		<logger level="INFO" doc:name="Logger" doc:id="a22d7e4a-1b10-41e4-bae0-c71196890906" message="End!!!" />
+	</flow>
+</mule>

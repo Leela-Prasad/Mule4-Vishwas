@@ -1,0 +1,1 @@
+mvn -Parchetype-repository archetype:generate -DarchetypeGroupId=org.mule.tools -DarchetypeArtifactId=api-gateway-custom-policy-archetype -DarchetypeVersion=1.2.0 -DgroupId=006636fb-2928-4814-b8bf-353393dfafe5 -DartifactId=ads-delivery -Dversion=1.0.0 -Dpackage-mule-policy

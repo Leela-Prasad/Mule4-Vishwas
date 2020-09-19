@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="sub-projectFlow" doc:id="441474e2-bc17-4308-a6de-238b988ed6e3" >
+		<logger level="INFO" doc:name="Logger" doc:id="fe0e0024-ad3c-4dd1-87f1-0f5cda92a942" message="In sub-project Flow"/>
+		<ee:transform doc:name="Transform Message" doc:id="ddafc54f-4afc-4988-9c3a-090dc389e2f5" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Inside sub Project Main Flow"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<sub-flow name="sub-projectSub_Flow" doc:id="64273379-3dcc-4f67-95dd-d7af903a4b3e" >
+		<logger level="INFO" doc:name="Logger" doc:id="816bc9e6-bdd2-4f26-9306-63ddc0002935" message="In sub-project Sub Flow"/>
+		<ee:transform doc:name="Transform Message" doc:id="cebf79c4-8c94-4425-a9e5-6643cb8be7e9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Inside sub Project Sub Flow"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+</mule>

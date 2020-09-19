@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="75309dfe-8d34-4df9-8035-916dd503df2c" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="8716ea33-726e-429b-93d5-41767bbfd0c0" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="xrBouqf2" database="employee-info" />
+	</db:config>
+	<flow name="streams-db-nonrepetable" doc:id="d61e1f79-f93f-4bc9-bec0-13be0a32d666" >
+		<http:listener doc:name="Listener" doc:id="0b53d26f-c4a4-4dad-bd09-4946a4bac747" config-ref="HTTP_Listener_config" path="db/streams/nr"/>
+		<logger level="INFO" doc:name="Logger" doc:id="157b1b1f-cee5-4e05-819a-aa7d0dd73652" message="Request Recieved"/>
+		<db:select doc:name="Select" doc:id="1d8de1b8-053d-4707-9f99-78b70d2b7e75" config-ref="Database_Config">
+			<non-repeatable-iterable />
+			<db:sql >SELECT * FROM employee</db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="Logger" doc:id="c52e8f89-459b-48b6-a803-8628f84529d5" message="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="e3de2fa6-779e-4272-bec7-20573b8896b9" message="#[output application/json --- payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="0f337026-bd45-46cb-8186-d80ef8e856d5" message="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="6102a8ad-e05c-42ce-933d-2f8dbfaa4549" message="#[output application/json --- payload]"/>
+	</flow>
+	<flow name="streams-db-repetable-file-store" doc:id="e6069877-66dd-4fd4-953b-d1a155293fe8" >
+		<http:listener doc:name="Listener" doc:id="b5b20f3b-3ab4-4b68-9ac6-68896a743534" config-ref="HTTP_Listener_config" path="db/streams/r/file/store"/>
+		<logger level="INFO" doc:name="Logger" doc:id="9b6ec849-1ae7-46ff-af6c-61cd7c55bb41" message="Request Recieved"/>
+		<db:select doc:name="Select" doc:id="96310150-0f81-49a5-9fd8-96202aec1b22" config-ref="Database_Config">
+			<db:sql >SELECT * FROM employee</db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="Logger" doc:id="10b8ebb6-32d1-4e8e-ad7d-2bfd13650362" message="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="09c4bbff-8358-4741-8c1b-b2a9c665be0a" message="#[output application/json --- payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="12ed7f68-1b1c-4950-bd0f-45a9121e41be" message="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="38ad50ab-8a94-46f3-a547-024c23024142" message="#[output application/json --- payload]"/>
+	</flow>
+	<flow name="streams-db-repetable-inmemory" doc:id="3904e685-c42a-4b88-952b-38af98307265" >
+		<http:listener doc:name="Listener" doc:id="da01e90c-e3dc-4ca5-b3bf-22085ca472b3" config-ref="HTTP_Listener_config" path="db/streams/r/inmemory"/>
+		<logger level="INFO" doc:name="Logger" doc:id="235d7d02-e83a-42c2-9156-0cbe931977f5" message="Request Recieved"/>
+		<db:select doc:name="Select" doc:id="37f1190c-bdd9-4a0f-907b-13789513fdac" config-ref="Database_Config">
+			<repeatable-in-memory-iterable/>
+			<db:sql >SELECT * FROM employee</db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="Logger" doc:id="f5836e71-b33e-4362-ad89-3a2f8bac6e44" message="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="ab6ead15-19f5-40e1-b533-fa6180856a49" message="#[output application/json --- payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="fe3c04a9-cda6-4c31-84cc-9a6d733a3c7c" message="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="1a0dbb25-be3d-42b2-8e62-d766ba56e29e" message="#[output application/json --- payload]"/>
+	</flow>
+</mule>

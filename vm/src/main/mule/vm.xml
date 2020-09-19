@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="6d1c5c35-839b-4eee-8c12-65d127602ce6" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<vm:config name="VM_Config" doc:name="VM Config" doc:id="31802451-8feb-4f0e-9575-160a6e5a8c13" >
+		<vm:queues >
+			<vm:queue queueName="test.q" queueType="PERSISTENT"/>
+		</vm:queues>
+	</vm:config>
+	<flow name="publish-flow" doc:id="f13ebef6-6899-45ef-890d-74c9e7061ad0" >
+		<http:listener doc:name="Listener" doc:id="a306c7f9-f2f4-42c2-b119-277021868683" config-ref="HTTP_Listener_config" path="/vm/publish"/>
+		<logger level="INFO" doc:name="Logger" doc:id="27226838-5794-4467-934f-ea0c2119d281" message="Request Received"/>
+		<ee:transform doc:name="Transform Message" doc:id="38c4f9b3-df5e-4540-9ac2-2e1c3d6e9371" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Hello World!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<vm:publish queueName="test.q" doc:name="Publish" doc:id="c7e73d17-c056-47f5-82d6-d3fb9b815f02" config-ref="VM_Config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="f954fb18-b51d-4968-ab60-3a39450cd52d" message="Message Posted Successfully"/>
+		<logger level="INFO" doc:name="Logger" doc:id="fab8ff15-0485-4599-9356-aadac7df8f05" message="#[payload]"/>
+	</flow>
+	<flow name="receiver-flow" doc:id="35b484ec-fa94-4039-9006-a18c38cbe9c7" >
+		<vm:listener queueName="test.q" doc:name="Listener" doc:id="93f4b882-5fea-48ef-b8ee-c145cebacaf1" config-ref="VM_Config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="b27e004e-6d81-4fd2-8f9c-d574e749fe71" message='#["Message Received from VM "]'/>
+		<ee:transform doc:name="Transform Message" doc:id="376d8f33-6eed-4d76-add0-74bb90fe0a49" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "Message Successfully processed"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="4b9e4b28-57d0-416f-80fe-e39e3677697e" message="#[payload]"/>
+	</flow>
+	<flow name="request-reply-flow" doc:id="e3b486d7-0789-4234-8b89-cfaede37f0e1" >
+		<http:listener doc:name="Listener" doc:id="6d9b0572-8bf3-4a55-9e6b-6f8c324bcf5e" config-ref="HTTP_Listener_config" path="/request/reply"/>
+		<logger level="INFO" doc:name="Logger" doc:id="511280cb-8334-4fbb-bcc0-30b2525c640b" message="Request Received"/>
+		<ee:transform doc:name="Transform Message" doc:id="1ec9a266-ca16-4dee-9724-56e4a3398b86" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Hello World!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<vm:publish-consume queueName="test.q" doc:name="Publish consume" doc:id="2a77d0b0-0100-4657-ba22-733de932abcb" config-ref="VM_Config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="0167efff-17e7-4d6d-8a4e-77c5f146b43b" message="#[payload]"/>
+	</flow>
+</mule>

@@ -1,0 +1,101 @@
+To deploy mule application to the Mule server during CI CD Pipeline we need to use Mule Maven Plugin.
+
+Standard Configuration
+<plugin>
+	<groupId>org.mule.tools.maven</groupId>
+	<artifactId>mule-maven-plugin</artifactId>
+	<version>${mule.maven.plugin.version}</version>
+	<extensions>true</extensions>
+	<configuration>
+	</configuration>
+</plugin> 
+
+With Username and password configuration
+<plugin>
+	<groupId>org.mule.tools.maven</groupId>
+	<artifactId>mule-maven-plugin</artifactId>
+	<version>${mule.maven.plugin.version}</version>
+	<extensions>true</extensions>
+	<configuration>
+		<cloudHubDeployment>
+			<username>${username}</username>
+			<password>${password}</password>
+			<environment>${environment}</environment>
+			<applicationName>${application.name}</applicationName>
+			<muleVersion>${mule.version}</muleVersion>
+		</cloudHubDeployment>
+	</configuration>
+</plugin>
+
+Run below command
+mvn clean package deploy -Dusername=leela240 -Dpassword=Leela240 -Denvironment=Sandbox -Dapplication.name=hello-world -Dmule.version=4.2.2 -DmuleDeploy
+
+
+Since above configuration has username and password hard coded we need to use below files to externalize password and encrypt passwords.
+
+1. ~/.m2/settings-security.xml
+In this file we will store master password.
+<settingsSecurity>
+	<master>{abUzy4L/ce0Hr+msnnyr1ltU7rJfxNC2SsI8zXohYMU=}</master>
+</settingsSecurity>
+
+2. ~/.m2/settings.xml
+In this file we will store anypoint platform password.
+ <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                          https://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <servers>
+    <server>
+      <id>anypoint.platform.credentials</id>
+      <username>leela240</username>
+      <password>{0py5r0Fxd8oHhWk+PrPgrETydr/sp/8XiGcg5Oqnv0o=}</password>
+    </server>
+  </servers>
+
+</settings>
+
+Below commands are used to generate encrypted passwords.
+mvn --encrypt-master-password M@5terPa55word
+mvn --encrypt-password Leela240
+
+
+Now the configuration will change to 
+<plugin>
+	<groupId>org.mule.tools.maven</groupId>
+	<artifactId>mule-maven-plugin</artifactId>
+	<version>${mule.maven.plugin.version}</version>
+	<extensions>true</extensions>
+	<configuration>
+		<cloudHubDeployment>
+			<server>anypoint.platform.credentials</server>
+			<environment>${environment}</environment>
+			<applicationName>${application.name}</applicationName>
+			<muleVersion>${mule.version}</muleVersion>
+		</cloudHubDeployment>
+	</configuration>
+</plugin>
+
+
+
+
+For OnPremise below is the configuration.
+<plugin>
+	<groupId>org.mule.tools.maven</groupId>
+	<artifactId>mule-maven-plugin</artifactId>
+	<version>${mule.maven.plugin.version}</version>
+	<extensions>true</extensions>
+	<configuration>
+		<armDeployment>
+			<server>anypoint.platform.credentials</server>
+			<target>${target}</target>
+			<targetType>${target.type}</targetType>
+			<environment>${environment}</environment>
+			<muleVersion>${mule.version}</muleVersion>
+		</armDeployment>
+	</configuration>
+</plugin> 
+
+Run below command
+mvn clean package deploy -Dtarget=onprem-server -Dtarget.type=server -Denvironment=Sandbox -Dmule.version=4.3.0 -DmuleDeploy

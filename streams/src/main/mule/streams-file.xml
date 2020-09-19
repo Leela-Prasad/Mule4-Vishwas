@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<file:config name="File_Config" doc:name="File Config" doc:id="5c69b773-eaaa-42f4-9a3a-271c6c0dd04c" />
+	<flow name="streams-file-nonrepetable" doc:id="2413c744-6191-437e-9ddd-a374709e65e8" >
+		<http:listener doc:name="Listener" doc:id="96f97a1e-b106-4fe0-a521-44f6bbcadb5f" config-ref="HTTP_Listener_config" path="/streams/file/nr"/>
+		<logger level="INFO" doc:name="Logger" doc:id="03d56e12-032a-4b10-b639-7a7e3b91a8dd" message="Request Received"/>
+		<file:read doc:name="Read" doc:id="166083ac-b7aa-4194-9124-256d4aeda649" config-ref="File_Config" path="/Users/Leela/Desktop/employees.json">
+			<non-repeatable-stream />
+		</file:read>
+		<logger level="INFO" doc:name="Logger" doc:id="ab716c71-c683-43d8-a5dc-637a0ac6dacc" message="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="1a18cc00-f489-42d2-8c95-031f0b5987ed" message="#[payload]"/>
+	</flow>
+	<flow name="streams-fileFlow" doc:id="4017f31a-ed10-452e-9388-361d0919e722" >
+		<http:listener doc:name="Listener" doc:id="e4e13dd4-47fa-4b02-9eae-0a426622600a" config-ref="HTTP_Listener_config" path="/streams/file/r/in-memory"/>
+		<logger level="INFO" doc:name="Logger" doc:id="c452b3e7-4612-4f02-965b-6d814fae4631" message="Request Received"/>
+		<file:read doc:name="Read" doc:id="3acddccd-d532-4a89-ad3f-8d301efb40b9" config-ref="File_Config" path="/Users/Leela/Desktop/employees2.json">
+			<repeatable-in-memory-stream/>
+		</file:read>
+		<logger level="INFO" doc:name="Logger" doc:id="ddca23e4-2aed-4a54-b3a0-67867a73b402" message="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="8babd719-f891-4bce-9216-a5cc67020ff8" message="#[payload]"/>
+	</flow>
+	<flow name="streams-fileFlow1" doc:id="00a0b3fa-bbfc-4e2a-82e2-bd43988bce9e" >
+		<http:listener doc:name="Listener" doc:id="d35ce900-9f7f-424b-b15e-02bf7f43a74e" config-ref="HTTP_Listener_config" path="/streams/file/r/file-based"/>
+		<logger level="INFO" doc:name="Logger" doc:id="57ebcd5e-9ea3-4a9f-b303-7c10369e4f5a" message="Request Received"/>
+		<file:read doc:name="Read" doc:id="d8b9cf0e-7c81-48f0-9f0e-5513e9aea2bb" config-ref="File_Config" path="/Users/Leela/Desktop/employees2.json"/>
+		<logger level="INFO" doc:name="Logger" doc:id="79122d48-dfc0-4b4a-8492-6ef37572fa53" message="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="3b120fb5-24db-4756-919c-ed4821c1d073" message="#[payload]"/>
+	</flow>
+</mule>

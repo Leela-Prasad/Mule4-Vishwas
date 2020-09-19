@@ -1,0 +1,1 @@
+fun sum(num1: Number, num2: Number) = num1 + num2

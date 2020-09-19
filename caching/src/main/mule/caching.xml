@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="ac2e0a72-1652-4c34-b75f-15a0f5cd5a2b" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<ee:object-store-caching-strategy name="Caching_Strategy" doc:name="Caching Strategy" doc:id="acc3a076-a607-41d6-bffd-54cfb6b71fdf" keyGenerationExpression="#[payload.id]" />
+	<ee:object-store-caching-strategy name="Caching_Strategy1" doc:name="Caching Strategy" doc:id="a7c94a62-2830-47db-859a-a62c29f1a616" keyGenerationExpression="#[payload.id]" >
+		<os:private-object-store alias="Test-Cache" maxEntries="2" entryTtl="10" expirationInterval="5" expirationIntervalUnit="SECONDS" />
+	</ee:object-store-caching-strategy>
+	<flow name="cache-scope-flow" doc:id="df280e64-314b-4810-846d-e36edae96987" >
+		<http:listener doc:name="Listener" doc:id="905a5dd1-8b8a-40d8-8863-0e426cdabc11" config-ref="HTTP_Listener_config" path="/cache/scope">
+		</http:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="455e03cb-a13b-4ab6-8d6c-e898921b630d" message="Request Received"/>
+		<ee:cache doc:name="Cache" doc:id="4f0b48ab-aa5f-409d-913d-dd1b2e803442" >
+			<logger level="INFO" doc:name="Logger" doc:id="7b34d884-c00f-49bb-96b1-3eea37a8da0b" message="Cache Scope Begins" />
+			<ee:transform doc:name="Transform Message" doc:id="02e4d1ae-3c69-4405-8a35-d4ab20ca18fb">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Hello World!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="509e72a0-c6b1-4c14-b16e-6f014e5b49af" message="Cache Scope Ends" />
+		</ee:cache>
+		<logger level="INFO" doc:name="Logger" doc:id="0f96cfa4-7784-4fd9-85f0-5a5b7af32c00" message="Response Ends"/>
+	</flow>
+	<flow name="cache-scope-with-variable-flow" doc:id="5b0f7c15-6d5a-457e-ae7d-3de56dc0cb79" >
+		<http:listener doc:name="Listener" doc:id="685aa251-d59e-4885-b2ab-bbba4feb913d" config-ref="HTTP_Listener_config" path="/cache/scope/2"/>
+		<logger level="INFO" doc:name="Logger" doc:id="4969a391-6ce2-4bf5-b0aa-9d9c406cf65c" message="Request Received"/>
+		<ee:cache doc:name="Cache" doc:id="bb8d1215-f3a4-4539-a485-9b9680f17a14" >
+			<logger level="INFO" doc:name="Logger" doc:id="be103aaf-7a5d-482a-8a06-907efccebe38" message="Cache Scope Begins"/>
+			<set-variable value="mule" doc:name="Set Variable" doc:id="a23bc519-a12d-4eb0-a72f-d9570dc4d082" variableName="key" />
+			<ee:transform doc:name="Transform Message" doc:id="f836999c-bd4d-4032-ad29-bc8e2e6ad01a">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Hello World!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="9a2b400d-0fbf-4995-93a9-b1a04be26274" message="Cache Scope Ends"/>
+		</ee:cache>
+		<logger level="INFO" doc:name="Logger" doc:id="bca5beff-ae03-48a7-a9e6-d7c3ebcaac65" message="Response Ends"/>
+		<logger level="INFO" doc:name="Logger" doc:id="5ade2451-9b56-4503-979d-aef52137a790" message='#["Key :: " ++ (vars.key default "")]'/>
+	</flow>
+	<flow name="cache-scope-with-filter-expression-flow" doc:id="beeb403c-0aa0-4e3d-8fe6-83df3dfd937f" >
+		<http:listener doc:name="Listener" doc:id="b8172ae0-51da-45ce-a08b-a457599d540b" config-ref="HTTP_Listener_config" path="/cache/scope/filter/expression"/>
+		<logger level="INFO" doc:name="Logger" doc:id="7b034b01-4762-4b19-a4b8-87b960a15fc4" message="Request Received"/>
+		<ee:cache doc:name="Cache" doc:id="4fbe675a-88e5-4021-888e-7c38de957100" filterExpression="#[payload.id == 1]">
+			<logger level="INFO" doc:name="Logger" doc:id="26441cf7-5a28-4a30-be03-510a306ee3e5" message="Cache Scope Begins"/>
+			<ee:transform doc:name="Transform Message" doc:id="52c6750a-9787-4df0-9dc8-7707ca46538b">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Hello World!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="f45bdbdc-1d53-43ef-8f77-fc6021b8b98f" message="Cache Scope Ends"/>
+		</ee:cache>
+		<logger level="INFO" doc:name="Logger" doc:id="d2eafde7-fdcc-4133-9644-d06a4a341f5a" message="Response Ends"/>
+	</flow>
+	<flow name="cache-scope-custom-key-flow" doc:id="d3d4a052-66f2-4cf7-9671-ad3c79ca4edf" >
+		<http:listener doc:name="Listener" doc:id="f42ebe51-2bf6-47af-9393-0b84c9b19190" config-ref="HTTP_Listener_config" path="/cache/scope/custom/key"/>
+		<logger level="INFO" doc:name="Logger" doc:id="1f606ec4-d89d-4aee-9651-ad78e6bb7154" message="Request Received"/>
+		<ee:cache doc:name="Cache" doc:id="4c110c08-8f75-4001-bcf4-6b90e26fe8ff" cachingStrategy-ref="Caching_Strategy">
+			<logger level="INFO" doc:name="Logger" doc:id="0c0a2ae1-0085-4b68-8d30-048737823eca" message="Cache Scope Begins"/>
+			<ee:transform doc:name="Transform Message" doc:id="a6ee0b99-e12a-4060-8c62-b369d94d702d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Hello World!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="830185f0-cbb7-4234-bef2-4c9b5f50469b" message="Cache Scope Ends"/>
+		</ee:cache>
+		<logger level="INFO" doc:name="Logger" doc:id="523fd4bf-82cb-4410-8611-c938e3d6e363" message="Response Ends"/>
+	</flow>
+	<flow name="cache-scope-with-os-flow" doc:id="d0d5af4a-a44b-4f15-bcb2-b86ba6c6e82f" >
+		<http:listener doc:name="Listener" doc:id="c2e31a2d-a6f5-4c3b-908e-f29c6a468be7" config-ref="HTTP_Listener_config" path="/cache/scope/os" />
+		<logger level="INFO" doc:name="Logger" doc:id="b501c6fd-ccda-4540-affe-5ab0fcbf237a" message="Request Received" />
+		<ee:cache doc:name="Cache" doc:id="d2a8491f-17bd-4db2-9c00-acb6fbf86be9" cachingStrategy-ref="Caching_Strategy1" >
+			<logger level="INFO" doc:name="Logger" doc:id="74d60997-113a-4433-beae-5643e6c6d4fa" message="Cache Scope Begins" />
+			<ee:transform doc:name="Transform Message" doc:id="2ab3cc72-3d13-41c1-b489-d5cfb37bb709" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Hello World!"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="64ab4f31-604c-4aac-8412-4dd361a6077a" message="Cache Scope Ends" />
+		</ee:cache>
+		<logger level="INFO" doc:name="Logger" doc:id="575c81bc-545f-46de-8f23-58020ddb6088" message="Response Ends" />
+	</flow> 
+</mule>

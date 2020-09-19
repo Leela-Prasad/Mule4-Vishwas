@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="77a96520-00ef-4140-8f53-5afbf50b2ffc" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="4c2a19d1-6ba9-42f7-8732-e0e5ec88a81d" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="xrBouqf2" database="employee-info" />
+	</db:config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="2200949a-195d-48fd-bce2-278e44130c87" basePath="/tp2">
+		<http:request-connection host="localhost" port="8081" />
+	</http:request-config>
+	<flow name="thread-poolsFlow" doc:id="abeadca0-1fc8-405a-a525-b231bf08e5a2" >
+		<http:listener doc:name="Listener" doc:id="d8ca03c2-bde8-4207-8406-335b5601da62" config-ref="HTTP_Listener_config" path="/thread/pools"/>
+		<logger level="INFO" doc:name="Logger" doc:id="977db5b8-40aa-41b0-8f06-d985093db4d7" message="Request Received"/>
+		<db:select doc:name="Select" doc:id="6663f684-4d1e-4e6c-9a27-f8d6dfaff6fc" config-ref="Database_Config">
+			<db:sql >SELECT * FROM employee</db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="55ab2a11-dbe7-4afc-9524-613a3c211bbc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "DW Executed!!!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="b909ebd6-e662-4ed7-ad79-3e6b06fda277" message="Response Completed Successfully!!!"/>
+		<http:request method="GET" doc:name="Request" doc:id="e1d6e75e-f155-4354-92ca-1f5f9e62d785" config-ref="HTTP_Request_configuration" path="/"/>
+	</flow>
+	<flow name="thread-poolsFlow1" doc:id="09257494-fc7a-422d-8895-e073fba7d255" >
+		<http:listener doc:name="Listener" doc:id="eafc06c4-33e5-4c8f-9887-1180a603ac2a" config-ref="HTTP_Listener_config" path="/tp2"/>
+		<logger level="INFO" doc:name="Logger" doc:id="e46b3080-3279-4409-9c77-22e1a54a0512" message="Outbound Call Executed"/>
+	</flow>
+	<flow name="thread-poolsFlow2" doc:id="035823a5-00a6-4827-830a-bbc7a9a6dce0" >
+		<http:listener doc:name="Listener" doc:id="79a167d0-3355-45e7-9cbd-27ce086e889b" config-ref="HTTP_Listener_config" path="/thread/pools/2" />
+		<logger level="INFO" doc:name="Logger" doc:id="ba510d4b-c68c-4ab8-b73e-69bff0d066a9" message="Request Received" />
+		<db:select doc:name="Select" doc:id="a0c38a1a-4794-42d1-8f7b-8c00d947b764" config-ref="Database_Config" >
+			<db:sql >SELECT * FROM employee</db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="Logger" doc:id="cce86b25-c6d5-4239-a9ca-7724dc749e01" message="Response Completed Successfully!!!" />
+		<ee:transform doc:name="Transform Message" doc:id="cc507842-0a44-4a65-a30d-59ed2cddae70" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "DW Executed!!!"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="0229bcc5-cb7f-4a15-8207-6d6670068aa4" config-ref="HTTP_Request_configuration" path="/" />
+	</flow>
+</mule>

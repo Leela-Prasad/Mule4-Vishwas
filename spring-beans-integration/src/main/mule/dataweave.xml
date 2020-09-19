@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="dataweaveFlow" doc:id="ddca94ae-7bb3-4ecd-99ec-7debe3cebc8c" >
+		<ee:transform doc:name="Transform Message" doc:id="e637c852-9a77-4b67-b5b7-661cf5e4c3bf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+
+import sum as customSum from mymodules::functions
+
+fun sum(num1: Number, num2: Number) = num1 + num2 + 1
+fun sum(num1: Number, num2: Number, num3: Number) = num1 + num2 + num3
+fun subtract(num1: Number, num2: Number) = num1 - num2
+
+fun functional(item: String, myfunction) = myfunction(item)
+---
+[
+	functional("leela", (item) -> item ++ "J"),
+	"leela" functional upper functional (item) -> item ++ " J"
+]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="dataweaveFlow1" doc:id="e8323ca8-d1e8-49b4-ac0b-2f993a9a4849" >
+		<ee:transform doc:name="Transform Message" doc:id="0c41639a-22cb-4c62-9db8-f4bbe942904d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+
+var isbn = [1256,8750,8279,1239]
+var books = ['Kafka on shore', 'Java for Dummies', 'Cloud Native Java']
+
+var bookDetails = {
+	"isbn": 1875,
+	"name": "Kafka on shore",
+	"Author": "Jaguar"
+}
+---
+bookDetails mapObject (value, key, index) -> {
+	(
+		if((key) as String == 'name') {
+			(key): value,
+			"Publisher": "JLP"
+		}else {
+			(key): value
+		}
+	)
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
